@@ -47,6 +47,8 @@ const (
 type LexicalAnalyser interface {
 	// Parse and return the next token.
 	ParseNextToken() LexAnToken
+	// Gets the current token type.
+	GetCurrentToken() LexAnToken
 	// Gets the text value of the current token.
 	GetTextValue() string
 	// Gets the numeric value of the current token.
@@ -150,6 +152,10 @@ func (lexAn *LexicalAnalyserReaderImpl) ParseNextToken() LexAnToken {
 		lexAn.numericValue = 0
 	}
 
+	return lexAn.currentToken
+}
+
+func (lexAn *LexicalAnalyserReaderImpl) GetCurrentToken() LexAnToken {
 	return lexAn.currentToken
 }
 
