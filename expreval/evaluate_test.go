@@ -31,7 +31,7 @@ func TestEvaluateDivide(t *testing.T) {
 func TestEvaluateDivideByZero(t *testing.T) {
 	evaluator := NewEvaluator()
 	result, err := evaluator.Evaluate("100 / 0")
-	assertEvaluatedResult(t, 0.0, DivideByZeroError, result, err)
+	assertEvaluatedResult(t, 0.0, ErrDivideByZero, result, err)
 }
 
 func TestEvaluatePower(t *testing.T) {
@@ -67,13 +67,13 @@ func TestEvaluateParenthesis(t *testing.T) {
 func TestEvaluateUnclosedParenthesis(t *testing.T) {
 	evaluator := NewEvaluator()
 	result, err := evaluator.Evaluate("2 * (3 + (1 / 2)")
-	assertEvaluatedResult(t, 0.0, MissingClosingParentheses, result, err)
+	assertEvaluatedResult(t, 0.0, ErrMissingClosingParentheses, result, err)
 }
 
 func TestEvaluateTooManyParenthesis(t *testing.T) {
 	evaluator := NewEvaluator()
 	result, err := evaluator.Evaluate("2 * (3 + (1 / 2)))")
-	assertEvaluatedResult(t, 0.0, UnexpectedRightParentheses, result, err)
+	assertEvaluatedResult(t, 0.0, ErrUnexpectedRightParentheses, result, err)
 }
 
 func TestEvaluateVariableAns(t *testing.T) {

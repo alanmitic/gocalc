@@ -5,11 +5,11 @@ import (
 	"math"
 )
 
-var PrimaryExpectedError = errors.New("Primary expected")
-var SyntaxError = errors.New("Syntax error")
-var DivideByZeroError = errors.New("Divide by zero")
-var MissingClosingParentheses = errors.New("')' expected")
-var UnexpectedRightParentheses = errors.New("unexpected ')'")
+var ErrPrimaryExpected = errors.New("primary expected")
+var ErrSyntax = errors.New("syntax error")
+var ErrDivideByZero = errors.New("divide by zero")
+var ErrMissingClosingParentheses = errors.New("')' expected")
+var ErrUnexpectedRightParentheses = errors.New("unexpected ')'")
 
 type Evaluator struct {
 	variableStore map[string]float64
@@ -46,7 +46,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 			switch lexAn.GetCurrentToken() {
 			case TokenRParen: // Final exit point (result).
 				if parenthesesLevel == 0 { // Check for too many RPs.
-					return 0.0, UnexpectedRightParentheses
+					return 0.0, ErrUnexpectedRightParentheses
 				}
 
 				return leftTerm, nil
@@ -55,7 +55,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 				return leftTerm, nil
 
 			default: // Systax error in the expression,
-				return 0.0, SyntaxError
+				return 0.0, ErrSyntax
 			}
 		}
 
@@ -117,7 +117,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 
 					// Prevent a divide by zero.
 					if rightTerm == 0.0 {
-						return 0.0, DivideByZeroError
+						return 0.0, ErrDivideByZero
 					}
 
 					leftTerm /= rightTerm
@@ -204,7 +204,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 
 				// Check expression should have ended on a right parentheses.
 				if lexAn.GetCurrentToken() != TokenRParen {
-					return 0.0, MissingClosingParentheses
+					return 0.0, ErrMissingClosingParentheses
 				}
 
 				lexAn.ParseNextToken()
@@ -214,10 +214,10 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 			}
 
 		case TokenBad:
-			return 0.0, SyntaxError
+			return 0.0, ErrSyntax
 
 		default:
-			return 0.0, PrimaryExpectedError
+			return 0.0, ErrPrimaryExpected
 		}
 	}
 }

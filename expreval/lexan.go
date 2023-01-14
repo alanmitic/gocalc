@@ -8,8 +8,8 @@ import (
 	"unicode"
 )
 
-var GeneralError = errors.New("General error reading input")
-var IdentifierSyntaxError = errors.New("Identifiers must begin with a letter and have a non-zero length")
+var ErrGeneral = errors.New("general error reading input")
+var ErrIdentifierSyntax = errors.New("identifiers must begin with a letter and have a non-zero length")
 
 // Lexical analyser token.
 //
@@ -145,7 +145,6 @@ func (lexAn *LexicalAnalyserReaderImpl) ParseNextToken() LexAnToken {
 			lexAn.textValue = ""
 			lexAn.numericValue = number
 		}
-		break
 	default:
 		lexAn.currentToken = TokenBad
 		lexAn.textValue = ""
@@ -196,7 +195,7 @@ func parseNumber(reader *strings.Reader) (float64, error) {
 				reader.UnreadRune()
 				break
 			} else {
-				return 0.0, GeneralError
+				return 0.0, ErrGeneral
 			}
 		}
 
@@ -218,7 +217,7 @@ func parseNumber(reader *strings.Reader) (float64, error) {
 	}
 
 	if len(numberString) == 0 {
-		return 0.0, IdentifierSyntaxError
+		return 0.0, ErrIdentifierSyntax
 	}
 
 	return strconv.ParseFloat(numberString, 64)
@@ -235,7 +234,7 @@ func parserIdentifier(reader *strings.Reader) (string, error) {
 				reader.UnreadRune()
 				break
 			} else {
-				return "", GeneralError
+				return "", ErrGeneral
 			}
 		}
 
@@ -248,7 +247,7 @@ func parserIdentifier(reader *strings.Reader) (string, error) {
 		} else {
 			if !unicode.IsLetter(c) {
 				reader.UnreadRune()
-				return "", IdentifierSyntaxError
+				return "", ErrIdentifierSyntax
 			}
 		}
 
@@ -257,7 +256,7 @@ func parserIdentifier(reader *strings.Reader) (string, error) {
 	}
 
 	if len(identifer) == 0 {
-		return "", IdentifierSyntaxError
+		return "", ErrIdentifierSyntax
 	}
 
 	return identifer, nil
