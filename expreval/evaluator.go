@@ -12,21 +12,31 @@ var MissingClosingParentheses = errors.New("')' expected")
 var UnexpectedRightParentheses = errors.New("unexpected ')'")
 
 type Evaluator struct {
+	variableStore map[string]float64
+}
+
+func NewEvaluator() *Evaluator {
+	evaluator := Evaluator{make(map[string]float64)}
+	return &evaluator
 }
 
 func (evaluator *Evaluator) Evaluate(expression string) (float64, error) {
 	lexAn := CreateLexicalAnalyser(expression)
-	result, err := getTerm(lexAn, 0, 0)
+	result, err := evaluator.getTerm(lexAn, 0, 0)
+	if err == nil {
+		evaluator.variableStore["$ans"] = result
+	}
+
 	return result, err
 }
 
-func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (float64, error) {
+func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (float64, error) {
 	// Process the terms at the supplied precedence.
 	switch precedence {
 	case 0: // OR, RP, END, ERROR.
 
 		// Process any higher operators first.
-		leftTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+		leftTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 		if err != nil {
 			return 0.0, err
 		}
@@ -52,7 +62,7 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 	case 1: // PLUS & MINUS.
 
 		// Process any higher operators first.
-		leftTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+		leftTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 		if err != nil {
 			return 0.0, err
 		}
@@ -61,20 +71,18 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 			// Process the lexer token.
 			switch lexAn.GetCurrentToken() {
 			case TokenOpPlus:
-				rightTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+				rightTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 				if err != nil {
 					return 0.0, err
 				}
 				leftTerm += rightTerm
-				break
 
 			case TokenOpMinus:
-				rightTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+				rightTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 				if err != nil {
 					return 0.0, err
 				}
 				leftTerm -= rightTerm
-				break
 
 			default:
 				return leftTerm, nil
@@ -84,7 +92,7 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 	case 2: // MULTIPLY, DIVIDE
 
 		// Process any higher operators first.
-		leftTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+		leftTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 		if err != nil {
 			return 0.0, err
 		}
@@ -93,17 +101,16 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 			// Process the lexer token.
 			switch lexAn.GetCurrentToken() {
 			case TokenOpMultiply:
-				rightTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+				rightTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 				if err != nil {
 					return 0.0, err
 				}
 
 				leftTerm *= rightTerm
-				break
 
 			case TokenOpDivide:
 				{
-					rightTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+					rightTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 					if err != nil {
 						return 0.0, err
 					}
@@ -115,7 +122,6 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 
 					leftTerm /= rightTerm
 				}
-				break
 
 			default:
 				return leftTerm, nil
@@ -125,7 +131,7 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 	case 3: // POWER.
 
 		// Process any higher operators first.
-		leftTerm, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+		leftTerm, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 		if err != nil {
 			return 0.0, err
 		}
@@ -134,13 +140,12 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 			// Process the lexer token.
 			switch lexAn.GetCurrentToken() {
 			case TokenOpPower:
-				p, err := getTerm(lexAn, precedence+1, parenthesesLevel)
+				p, err := evaluator.getTerm(lexAn, precedence+1, parenthesesLevel)
 				if err != nil {
 					return 0.0, err
 				}
 
 				leftTerm = math.Pow(leftTerm, p)
-				break
 
 			default:
 				return leftTerm, nil
@@ -165,16 +170,34 @@ func getTerm(lexAn LexicalAnalyser, precedence uint, parenthesesLevel uint) (flo
 			}
 
 		case TokenOpMinus:
-			v, err := getTerm(lexAn, precedence, parenthesesLevel)
+			v, err := evaluator.getTerm(lexAn, precedence, parenthesesLevel)
 			return -v, err
 
 		case TokenOpPlus:
-			return getTerm(lexAn, precedence, parenthesesLevel)
+			return evaluator.getTerm(lexAn, precedence, parenthesesLevel)
+
+		case TokenVariable:
+			//// Extract symbol value from global symbol table.
+			variableName := lexAn.GetTextValue()
+			variableValue := evaluator.variableStore[variableName]
+			var err error = nil
+
+			// Get the next token, so that the token type of the next token is available to the caller of this function.
+			// If we have an assign "=" then process the terms after the assign to determine the value of the symbol.
+			if lexAn.ParseNextToken() == TokenOpAssign {
+				variableValue, err = evaluator.getTerm(lexAn, 0, 0)
+				if err == nil {
+					evaluator.variableStore[variableName] = variableValue
+				}
+			}
+
+			// Return the value of the symbol.
+			return variableValue, err
 
 		case TokenLParen:
 			{
 				// Treat the expression after the parentheses as a new expression and evaluate.
-				parenResult, err := getTerm(lexAn, 0, parenthesesLevel+1)
+				parenResult, err := evaluator.getTerm(lexAn, 0, parenthesesLevel+1)
 				if err != nil {
 					return 0.0, err
 				}
