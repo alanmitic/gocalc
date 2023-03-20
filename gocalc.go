@@ -13,7 +13,7 @@ func main() {
 	evaluator := expreval.NewEvaluator()
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("gocalc version 0.0.1\n\nType 'exit' and ENTER to quit.")
+	fmt.Println("gocalc version 0.0.2\n\nType 'exit' and ENTER to quit.")
 
 	resultformatter := resultformatter.NewResultFormatter()
 	commandParser := command.NewCommandParser(resultformatter)
