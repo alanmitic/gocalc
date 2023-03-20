@@ -3,6 +3,7 @@ package expreval
 import (
 	"errors"
 	"io"
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -10,6 +11,7 @@ import (
 
 var ErrGeneral = errors.New("general error reading input")
 var ErrIdentifierSyntax = errors.New("identifiers must begin with a letter and have a non-zero length")
+var ErrOverflow = errors.New("value too large")
 
 // Lexical analyser token.
 //
@@ -41,6 +43,18 @@ const (
 	TokenVariable
 	// Number.
 	TokenNumber
+	// Identifier.
+	TokenIdentifier
+)
+
+//go:generate stringer -type=BaseModifier
+type BaseModifier int
+
+const (
+	BaseModifierNone BaseModifier = iota
+	BaseModifierBin
+	BaseModifierOct
+	BaseModifierHex
 )
 
 // Lexical Analyser that returns tokens.
@@ -62,6 +76,24 @@ type LexicalAnalyserReaderImpl struct {
 	currentToken LexAnToken
 	textValue    string
 	numericValue float64
+}
+
+var binRangeTable = &unicode.RangeTable{
+	R16:         []unicode.Range16{{0x0030, 0x0031, 1}},
+	R32:         []unicode.Range32{},
+	LatinOffset: 1,
+}
+
+var octRangeTable = &unicode.RangeTable{
+	R16:         []unicode.Range16{{0x0030, 0x0037, 1}},
+	R32:         []unicode.Range32{},
+	LatinOffset: 1,
+}
+
+var hexRangeTable = &unicode.RangeTable{
+	R16:         []unicode.Range16{{0x0030, 0x0039, 1}, {0x0051, 0x005A, 1}, {0x0061, 0x007A, 1}},
+	R32:         []unicode.Range32{},
+	LatinOffset: 3,
 }
 
 // Creates a Lexical Analyser for the supplied input.
@@ -103,7 +135,7 @@ func (lexAn *LexicalAnalyserReaderImpl) ParseNextToken() LexAnToken {
 	case '^':
 		lexAn.currentToken = TokenOpPower
 	case '$':
-		var identifier, err = parserIdentifier(lexAn.reader)
+		var identifier, err = parserIdentifier(lexAn.reader, "")
 		if err != nil {
 			lexAn.currentToken = TokenBad
 			lexAn.textValue = ""
@@ -135,7 +167,7 @@ func (lexAn *LexicalAnalyserReaderImpl) ParseNextToken() LexAnToken {
 		fallthrough
 	case '.':
 		lexAn.reader.UnreadRune()
-		number, err := parseNumber(lexAn.reader)
+		number, err := parseNumber(lexAn.reader, BaseModifierNone)
 		if err != nil {
 			lexAn.currentToken = TokenBad
 			lexAn.textValue = ""
@@ -146,9 +178,41 @@ func (lexAn *LexicalAnalyserReaderImpl) ParseNextToken() LexAnToken {
 			lexAn.numericValue = number
 		}
 	default:
-		lexAn.currentToken = TokenBad
-		lexAn.textValue = ""
-		lexAn.numericValue = 0
+		// An idenitifier or bad token.
+		if unicode.IsLetter(c) {
+			symbolChar, _, _ := lexAn.reader.ReadRune()
+
+			preReadfragment := string(c) + string(symbolChar)
+			baseModifier := extractNumberBaseModifier(preReadfragment)
+			if baseModifier != BaseModifierNone {
+				// Handle b$n, o%n or h$n
+				number, err := parseNumber(lexAn.reader, baseModifier)
+				if err != nil {
+					lexAn.currentToken = TokenBad
+					lexAn.textValue = ""
+					lexAn.numericValue = 0
+				} else {
+					lexAn.currentToken = TokenNumber
+					lexAn.textValue = ""
+					lexAn.numericValue = number
+				}
+			} else {
+				identifier, err := parserIdentifier(lexAn.reader, preReadfragment)
+				if err != nil {
+					lexAn.currentToken = TokenBad
+					lexAn.textValue = ""
+					lexAn.numericValue = 0
+				} else {
+					lexAn.currentToken = TokenIdentifier
+					lexAn.textValue = identifier
+					lexAn.numericValue = 0
+				}
+			}
+		} else {
+			lexAn.currentToken = TokenBad
+			lexAn.textValue = ""
+			lexAn.numericValue = 0
+		}
 	}
 
 	return lexAn.currentToken
@@ -184,9 +248,24 @@ func nextCharacterIgnoringWhitespace(reader *strings.Reader) (rune, error) {
 	return c, err
 }
 
-func parseNumber(reader *strings.Reader) (float64, error) {
+func parseNumber(reader *strings.Reader, baseModifier BaseModifier) (float64, error) {
 	numberString := ""
 	foundDecimalPoint := false
+
+	rangeTable := unicode.Digit
+	baseSupportsDecimalPoint := true
+
+	switch baseModifier {
+	case BaseModifierBin:
+		rangeTable = binRangeTable
+		baseSupportsDecimalPoint = false
+	case BaseModifierOct:
+		rangeTable = octRangeTable
+		baseSupportsDecimalPoint = false
+	case BaseModifierHex:
+		rangeTable = hexRangeTable
+		baseSupportsDecimalPoint = false
+	}
 
 	for {
 		c, _, err := reader.ReadRune()
@@ -199,7 +278,7 @@ func parseNumber(reader *strings.Reader) (float64, error) {
 			}
 		}
 
-		if c == '.' {
+		if c == '.' && baseSupportsDecimalPoint {
 			if foundDecimalPoint {
 				reader.UnreadRune()
 				break
@@ -207,7 +286,7 @@ func parseNumber(reader *strings.Reader) (float64, error) {
 				foundDecimalPoint = true
 			}
 		} else {
-			if !unicode.IsNumber(c) {
+			if !unicode.In(c, rangeTable) {
 				reader.UnreadRune()
 				break
 			}
@@ -220,12 +299,49 @@ func parseNumber(reader *strings.Reader) (float64, error) {
 		return 0.0, ErrIdentifierSyntax
 	}
 
-	return strconv.ParseFloat(numberString, 64)
+	if baseModifier != BaseModifierNone {
+		var base int
+		switch baseModifier {
+		case BaseModifierBin:
+			base = 2
+		case BaseModifierOct:
+			base = 8
+		case BaseModifierHex:
+			base = 16
+		}
+
+		intNumber64, err := strconv.ParseInt(numberString, base, 64)
+		if err != nil {
+			return 0.0, err
+		}
+
+		if intNumber64 > math.MaxUint32 {
+			return 0.0, ErrOverflow
+		}
+
+		truncatedInt32 := int32(intNumber64)
+		return float64(truncatedInt32), err
+	} else {
+		return strconv.ParseFloat(numberString, 64)
+	}
 }
 
-func parserIdentifier(reader *strings.Reader) (string, error) {
+func extractNumberBaseModifier(modifier string) BaseModifier {
+	switch modifier {
+	case "b$":
+		return BaseModifierBin
+	case "o$":
+		return BaseModifierOct
+	case "h$":
+		return BaseModifierHex
+	default:
+		return BaseModifierNone
+	}
+}
+
+func parserIdentifier(reader *strings.Reader, preReadFragment string) (string, error) {
 	haveFirstLetter := false
-	identifer := ""
+	identifer := preReadFragment
 
 	for {
 		c, _, err := reader.ReadRune()

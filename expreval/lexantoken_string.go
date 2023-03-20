@@ -20,11 +20,12 @@ func _() {
 	_ = x[TokenOpPower-9]
 	_ = x[TokenVariable-10]
 	_ = x[TokenNumber-11]
+	_ = x[TokenIdentifier-12]
 }
 
-const _LexAnToken_name = "TokenBadTokenEndTokenLParenTokenRParenTokenOpAssignTokenOpPlusTokenOpMinusTokenOpMultiplyTokenOpDivideTokenOpPowerTokenVariableTokenNumber"
+const _LexAnToken_name = "TokenBadTokenEndTokenLParenTokenRParenTokenOpAssignTokenOpPlusTokenOpMinusTokenOpMultiplyTokenOpDivideTokenOpPowerTokenVariableTokenNumberTokenIdentifier"
 
-var _LexAnToken_index = [...]uint8{0, 8, 16, 27, 38, 51, 62, 74, 89, 102, 114, 127, 138}
+var _LexAnToken_index = [...]uint8{0, 8, 16, 27, 38, 51, 62, 74, 89, 102, 114, 127, 138, 153}
 
 func (i LexAnToken) String() string {
 	if i < 0 || i >= LexAnToken(len(_LexAnToken_index)-1) {
