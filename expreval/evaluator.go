@@ -12,7 +12,7 @@ var ErrMissingClosingParentheses = errors.New("')' expected")
 var ErrUnexpectedRightParentheses = errors.New("unexpected ')'")
 
 type Evaluator struct {
-	variableStore map[string]float64
+	VariableStore map[string]float64
 }
 
 func NewEvaluator() *Evaluator {
@@ -24,7 +24,7 @@ func (evaluator *Evaluator) Evaluate(expression string) (float64, error) {
 	lexAn := CreateLexicalAnalyser(expression)
 	result, err := evaluator.getTerm(lexAn, 0, 0)
 	if err == nil {
-		evaluator.variableStore["$ans"] = result
+		evaluator.VariableStore["$ans"] = result
 	}
 
 	return result, err
@@ -179,7 +179,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 		case TokenVariable:
 			//// Extract symbol value from global symbol table.
 			variableName := lexAn.GetTextValue()
-			variableValue := evaluator.variableStore[variableName]
+			variableValue := evaluator.VariableStore[variableName]
 			var err error = nil
 
 			// Get the next token, so that the token type of the next token is available to the caller of this function.
@@ -187,7 +187,7 @@ func (evaluator *Evaluator) getTerm(lexAn LexicalAnalyser, precedence uint, pare
 			if lexAn.ParseNextToken() == TokenOpAssign {
 				variableValue, err = evaluator.getTerm(lexAn, 0, 0)
 				if err == nil {
-					evaluator.variableStore[variableName] = variableValue
+					evaluator.VariableStore[variableName] = variableValue
 				}
 			}
 

@@ -35,6 +35,10 @@ func (commandFix *CommandFix) Execute(arguments []Argument) error {
 	return nil
 }
 
+func (commandFix *CommandFix) GetUsage() (string, string) {
+	return "fix <precision>", "Set fix point output mode with optional precision."
+}
+
 func NewCommandFix(resultFormatter resultformatter.ResultFormatter) Command {
 	command := CommandFix{}
 	command.resultFormatter = resultFormatter

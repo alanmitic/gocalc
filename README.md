@@ -14,7 +14,11 @@ gocalc supports the following operators in the expression.
 | ( )        | Parentheses        | 2 * (1 + (3 / 4)) |
 
 ## Variables
-gocalc supports variables in the expression.  Variables are accessed via the $identifier syntax.  $ans is reserved for the result of the last operation.
+gocalc supports variables in the expression.  Variables are accessed via the $identifier syntax.  $ans is reserved for the result of the last operation.  The following commands are supported
+
+| Command |      Description       | Example Syntax    |
+|:-------:|:-----------------------|:------------------|
+| vars    | List defined variables | vars              |
 
 ## Input base
 gocalc support the following binary (base 2), octal (base 8), decimal/real (base 10) and hexadecimal (base 16).

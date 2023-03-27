@@ -35,6 +35,10 @@ func (commandSci *CommandSci) Execute(arguments []Argument) error {
 	return nil
 }
 
+func (commandSci *CommandSci) GetUsage() (string, string) {
+	return "sci <precision>", "Set scientific output mode with optional precision."
+}
+
 func NewCommandSci(resultFormatter resultformatter.ResultFormatter) Command {
 	command := CommandSci{}
 	command.resultFormatter = resultFormatter

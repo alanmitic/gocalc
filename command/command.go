@@ -16,5 +16,5 @@ type Command interface {
 	GetName() string
 	GetSignatures() []Signature
 	Execute(arguments []Argument) error
-	// TODO: Add a GetUsage which returns a string
+	GetUsage() (string, string)
 }

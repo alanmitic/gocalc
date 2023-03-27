@@ -64,13 +64,13 @@ func (resultFormatter *ResultFormatterImpl) FormatValue(value float64) string {
 	case OutputModeScientific:
 		formattedValue = strconv.FormatFloat(value, 'e', resultFormatter.precision, 64)
 	case OutputModeBinary:
-		intValue := int(value)
+		intValue := int(value) & 0xffffffff
 		formattedValue = fmt.Sprintf("%032b", intValue)
 	case OutputModeOctal:
-		intValue := int(value)
+		intValue := int(value) & 0xffffffff
 		formattedValue = fmt.Sprintf("%012o", intValue)
 	case OutputModeHexadecimal:
-		intValue := int(value)
+		intValue := int(value) & 0xffffffff
 		formattedValue = fmt.Sprintf("%08x", intValue)
 	}
 

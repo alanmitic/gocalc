@@ -7,8 +7,9 @@ import (
 )
 
 func TestCommandRealNoPrecision(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, arguments, _ := commandParser.ParseCommand("real")
 	assertCommand(t, command, "real")
 	assertArguments(t, arguments, []Argument{})
@@ -18,8 +19,9 @@ func TestCommandRealNoPrecision(t *testing.T) {
 }
 
 func TestCommandRealWithPrecision(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, arguments, _ := commandParser.ParseCommand("real 4")
 	assertCommand(t, command, "real")
 	assertArguments(t, arguments, []Argument{{expreval.TokenNumber, "", 4.0}})
@@ -29,8 +31,9 @@ func TestCommandRealWithPrecision(t *testing.T) {
 }
 
 func TestCommandRealWithTooManyArgs(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, _, err := commandParser.ParseCommand("real 2 5")
 	assertNilCommandAndError(t, command, err, ErrTooManyArgs)
 }

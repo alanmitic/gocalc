@@ -111,18 +111,27 @@ func TestResultFormatterFormatValueBinary(t *testing.T) {
 	resultFormatter := NewResultFormatter()
 	resultFormatter.SetOutputMode(OutputModeBinary)
 	assertFormattedValue(t, resultFormatter, 123456789, "00000111010110111100110100010101")
+	assertFormattedValue(t, resultFormatter, -2147483648, "10000000000000000000000000000000")
+	assertFormattedValue(t, resultFormatter, -1, "11111111111111111111111111111111")
+	assertFormattedValue(t, resultFormatter, 2147483647, "01111111111111111111111111111111")
 }
 
 func TestResultFormatterFormatValueOctal(t *testing.T) {
 	resultFormatter := NewResultFormatter()
 	resultFormatter.SetOutputMode(OutputModeOctal)
 	assertFormattedValue(t, resultFormatter, 123456789, "000726746425")
+	assertFormattedValue(t, resultFormatter, -2147483648, "020000000000")
+	assertFormattedValue(t, resultFormatter, -1, "037777777777")
+	assertFormattedValue(t, resultFormatter, 2147483647, "017777777777")
 }
 
 func TestResultFormatterFormatHexadecimal(t *testing.T) {
 	resultFormatter := NewResultFormatter()
 	resultFormatter.SetOutputMode(OutputModeHexadecimal)
 	assertFormattedValue(t, resultFormatter, 123456789, "075bcd15")
+	assertFormattedValue(t, resultFormatter, -2147483648, "80000000")
+	assertFormattedValue(t, resultFormatter, -1, "ffffffff")
+	assertFormattedValue(t, resultFormatter, 2147483647, "7fffffff")
 }
 
 func assertFormattedValue(t *testing.T, resultFormatter ResultFormatter, inputValue float64, expectedFormattedValue string) {
