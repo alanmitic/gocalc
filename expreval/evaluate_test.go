@@ -99,7 +99,7 @@ func TestEvaluateUseVariable(t *testing.T) {
 }
 
 func assertVariableValue(t *testing.T, evaluator *Evaluator, variableName string, expectedvariableValue float64) {
-	actualVariableValue, variableFound := evaluator.variableStore[variableName]
+	actualVariableValue, variableFound := evaluator.VariableStore[variableName]
 
 	if !variableFound {
 		t.Error("Variable not found:", variableName)

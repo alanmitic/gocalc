@@ -6,19 +6,22 @@ import (
 	"testing"
 )
 
-func TestCommandExit(t *testing.T) {
+func TestCommandHex(t *testing.T) {
 	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
 	commandParser := NewCommandParser(evaluator, resultFormatter)
-	command, arguments, _ := commandParser.ParseCommand("exit")
-	assertCommand(t, command, "exit")
+	command, arguments, _ := commandParser.ParseCommand("hex")
+	assertCommand(t, command, "hex")
 	assertArguments(t, arguments, []Argument{})
+
+	command.Execute(arguments)
+	assertOutputModeAndPrecision(t, resultFormatter, resultformatter.OutputModeHexadecimal, -1)
 }
 
-func TestCommandExitWithTooManyArgs(t *testing.T) {
+func TestCommandHexWithTooManyArgs(t *testing.T) {
 	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
 	commandParser := NewCommandParser(evaluator, resultFormatter)
-	command, _, err := commandParser.ParseCommand("exit 2 5")
+	command, _, err := commandParser.ParseCommand("hex 2")
 	assertNilCommandAndError(t, command, err, ErrTooManyArgs)
 }

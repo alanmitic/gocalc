@@ -15,21 +15,26 @@ type CommandParser struct {
 	commands map[string]Command
 }
 
-func NewCommandParser(resultformatter resultformatter.ResultFormatter) *CommandParser {
+func NewCommandParser(evaluator *expreval.Evaluator, resultformatter resultformatter.ResultFormatter) *CommandParser {
 	commandParser := CommandParser{}
 
-	commandExit := NewCommandExit()
-	commandFix := NewCommandFix(resultformatter)
-	commandReal := NewCommandReal(resultformatter)
-	commandSci := NewCommandSci(resultformatter)
-
 	commandParser.commands = make(map[string]Command)
-	commandParser.commands[commandExit.GetName()] = commandExit
-	commandParser.commands[commandFix.GetName()] = commandFix
-	commandParser.commands[commandReal.GetName()] = commandReal
-	commandParser.commands[commandSci.GetName()] = commandSci
+
+	addCommand(commandParser.commands, NewCommandExit())
+	addCommand(commandParser.commands, NewCommandFix(resultformatter))
+	addCommand(commandParser.commands, NewCommandReal(resultformatter))
+	addCommand(commandParser.commands, NewCommandSci(resultformatter))
+	addCommand(commandParser.commands, NewCommandBin(resultformatter))
+	addCommand(commandParser.commands, NewCommandOct(resultformatter))
+	addCommand(commandParser.commands, NewCommandHex(resultformatter))
+	addCommand(commandParser.commands, NewCommandVars(evaluator))
+	addCommand(commandParser.commands, NewCommandHelp(commandParser.commands))
 
 	return &commandParser
+}
+
+func addCommand(commands map[string]Command, command Command) {
+	commands[command.GetName()] = command
 }
 
 func (commandParser *CommandParser) ParseCommand(input string) (Command, []Argument, error) {

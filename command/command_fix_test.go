@@ -7,8 +7,9 @@ import (
 )
 
 func TestCommandFixNoPrecision(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, arguments, _ := commandParser.ParseCommand("fix")
 	assertCommand(t, command, "fix")
 	assertArguments(t, arguments, []Argument{})
@@ -18,8 +19,9 @@ func TestCommandFixNoPrecision(t *testing.T) {
 }
 
 func TestCommandFixWithPrecision(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, arguments, _ := commandParser.ParseCommand("fix 4")
 	assertCommand(t, command, "fix")
 	assertArguments(t, arguments, []Argument{{expreval.TokenNumber, "", 4.0}})
@@ -29,8 +31,9 @@ func TestCommandFixWithPrecision(t *testing.T) {
 }
 
 func TestCommandFixWithTooManyArgs(t *testing.T) {
+	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
-	commandParser := NewCommandParser(resultFormatter)
+	commandParser := NewCommandParser(evaluator, resultFormatter)
 	command, _, err := commandParser.ParseCommand("fix 2 5")
 	assertNilCommandAndError(t, command, err, ErrTooManyArgs)
 }

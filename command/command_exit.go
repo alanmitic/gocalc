@@ -23,6 +23,10 @@ func (commandExit *CommandExit) Execute(arguments []Argument) error {
 	return nil
 }
 
+func (commandExit *CommandExit) GetUsage() (string, string) {
+	return "exit", "Exit application."
+}
+
 func NewCommandExit() Command {
 	command := CommandExit{}
 	return &command

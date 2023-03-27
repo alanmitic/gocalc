@@ -35,6 +35,10 @@ func (commandReal *CommandReal) Execute(arguments []Argument) error {
 	return nil
 }
 
+func (commandReal *CommandReal) GetUsage() (string, string) {
+	return "real <precision>", "Set real output mode with optional precision."
+}
+
 func NewCommandReal(resultFormatter resultformatter.ResultFormatter) Command {
 	command := CommandReal{}
 	command.resultFormatter = resultFormatter

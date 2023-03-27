@@ -6,19 +6,22 @@ import (
 	"testing"
 )
 
-func TestCommandExit(t *testing.T) {
+func TestCommandOct(t *testing.T) {
 	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
 	commandParser := NewCommandParser(evaluator, resultFormatter)
-	command, arguments, _ := commandParser.ParseCommand("exit")
-	assertCommand(t, command, "exit")
+	command, arguments, _ := commandParser.ParseCommand("oct")
+	assertCommand(t, command, "oct")
 	assertArguments(t, arguments, []Argument{})
+
+	command.Execute(arguments)
+	assertOutputModeAndPrecision(t, resultFormatter, resultformatter.OutputModeOctal, -1)
 }
 
-func TestCommandExitWithTooManyArgs(t *testing.T) {
+func TestCommandOctWithTooManyArgs(t *testing.T) {
 	evaluator := expreval.NewEvaluator()
 	resultFormatter := resultformatter.NewResultFormatter()
 	commandParser := NewCommandParser(evaluator, resultFormatter)
-	command, _, err := commandParser.ParseCommand("exit 2 5")
+	command, _, err := commandParser.ParseCommand("oct 2")
 	assertNilCommandAndError(t, command, err, ErrTooManyArgs)
 }
